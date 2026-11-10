@@ -49,3 +49,27 @@ def test_build_epub_includes_source_footer(tmp_path: Path):
     docs = list(book.get_items_of_type(ebooklib.ITEM_DOCUMENT))
     blob = b"".join(i.get_content() for i in docs).decode("utf-8", errors="ignore")
     assert "https://example.com/1" in blob
+
+
+def test_build_epub_cleans_partial_on_write_failure(tmp_path: Path, monkeypatch):
+    from web_to_epub import epub_build as mod
+    from web_to_epub.epub_build import Chapter, build_epub
+
+    chapters = [
+        Chapter(title="One", body_html="<p>a</p>", source_url="https://example.com/1"),
+    ]
+    dest = tmp_path / "out.epub"
+    partial = dest.with_suffix(dest.suffix + ".partial")
+
+    def boom(path, book, **kwargs):
+        Path(path).write_bytes(b"partial-junk")
+        raise OSError("disk full")
+
+    monkeypatch.setattr(mod.epub, "write_epub", boom)
+    try:
+        build_epub(chapters, title="T", author=None, dest=dest)
+        assert False, "expected OSError"
+    except OSError:
+        pass
+    assert not partial.exists()
+    assert not dest.exists()

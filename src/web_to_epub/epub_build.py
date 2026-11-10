@@ -14,7 +14,7 @@ class Chapter:
     source_url: str
 
 
-def _chapter_xhtml(chapter: Chapter, index: int) -> str:
+def _chapter_xhtml(chapter: Chapter, _index: int) -> str:
     # body_html is a fragment; wrap minimally. ebooklib expects unicode str.
     return (
         f"<h1>{_escape(chapter.title)}</h1>\n"
@@ -67,6 +67,11 @@ def build_epub(
     book.spine = spine
 
     partial = dest_path.with_suffix(dest_path.suffix + ".partial")
-    epub.write_epub(str(partial), book)
-    os.replace(partial, dest_path)
+    try:
+        epub.write_epub(str(partial), book)
+        os.replace(partial, dest_path)
+    except Exception:
+        if partial.exists():
+            partial.unlink(missing_ok=True)
+        raise
     return dest_path

@@ -78,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
             author=args.author,
             dest=dest,
         )
-    except OSError as exc:
+    except Exception as exc:  # noqa: BLE001 — assemble/write must exit 1, not crash 2
         print(f"cannot write EPUB: {exc}", file=sys.stderr)
         return 1
 

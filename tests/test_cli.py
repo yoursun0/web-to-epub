@@ -69,3 +69,49 @@ def test_cli_empty_url_list(tmp_path: Path):
     urls.write_text("# none\n", encoding="utf-8")
     code = main([str(urls), "--title", "T", "-o", str(tmp_path / "o.epub")])
     assert code == 1
+
+
+def test_cli_unwritable_output_exits_1(tmp_path: Path, capsys):
+    urls = tmp_path / "urls.txt"
+    urls.write_text("https://example.com/ok\n", encoding="utf-8")
+    # Parent path is a file → mkdir / write fails with OSError
+    blocker = tmp_path / "not-a-dir"
+    blocker.write_text("x", encoding="utf-8")
+    out = blocker / "book.epub"
+
+    def fake_fetch(url: str, *, timeout: float = 30.0) -> str:
+        return f"<html><body><article><h1>{url}</h1><p>body</p></article></body></html>"
+
+    def fake_extract(html: str, url: str) -> Chapter | None:
+        return Chapter(title=url, body_html=f"<p>{url}</p>", source_url=url)
+
+    with patch("web_to_epub.cli.fetch_html", side_effect=fake_fetch), patch(
+        "web_to_epub.cli.extract_chapter", side_effect=fake_extract
+    ):
+        code = main([str(urls), "--title", "Demo", "-o", str(out)])
+    assert code == 1
+    assert not out.exists()
+    assert not Path(str(out) + ".partial").exists()
+    err = capsys.readouterr().err
+    assert "cannot write EPUB" in err
+
+
+def test_cli_build_epub_exception_exits_1(tmp_path: Path, capsys):
+    urls = tmp_path / "urls.txt"
+    urls.write_text("https://example.com/ok\n", encoding="utf-8")
+    out = tmp_path / "book.epub"
+
+    def fake_fetch(url: str, *, timeout: float = 30.0) -> str:
+        return "<html><body><p>x</p></body></html>"
+
+    def fake_extract(html: str, url: str) -> Chapter | None:
+        return Chapter(title="T", body_html="<p>x</p>", source_url=url)
+
+    with patch("web_to_epub.cli.fetch_html", side_effect=fake_fetch), patch(
+        "web_to_epub.cli.extract_chapter", side_effect=fake_extract
+    ), patch(
+        "web_to_epub.cli.build_epub", side_effect=RuntimeError("assemble boom")
+    ):
+        code = main([str(urls), "--title", "Demo", "-o", str(out)])
+    assert code == 1
+    assert "cannot write EPUB" in capsys.readouterr().err
