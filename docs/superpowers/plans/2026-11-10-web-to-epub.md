@@ -71,7 +71,7 @@ class Chapter:
 - Consumes: (none)
 - Produces: installable package `web-to-epub` with empty modules importable; console script entry point declared
 
-- [ ] **Step 1: Write pyproject.toml**
+- [x] **Step 1: Write pyproject.toml**
 
 ```toml
 [build-system]
@@ -104,7 +104,7 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 ```
 
-- [ ] **Step 2: Write package stubs**
+- [x] **Step 2: Write package stubs**
 
 `src/web_to_epub/__init__.py`:
 
@@ -132,7 +132,7 @@ def main(argv: list[str] | None = None) -> int:
 
 `src/web_to_epub/url_file.py`, `fetch.py`, `extract.py`, `epub_build.py`: empty files (or a module docstring only) for now.
 
-- [ ] **Step 3: Write failing import smoke test**
+- [x] **Step 3: Write failing import smoke test**
 
 `tests/test_smoke_import.py`:
 
@@ -143,7 +143,7 @@ def test_package_version():
     assert web_to_epub.__version__ == "0.1.0"
 ```
 
-- [ ] **Step 4: Install editable + run smoke test**
+- [x] **Step 4: Install editable + run smoke test**
 
 Run:
 
@@ -155,7 +155,7 @@ pytest tests/test_smoke_import.py -v
 
 Expected: PASS (`test_package_version`)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add pyproject.toml src/web_to_epub/__init__.py src/web_to_epub/__main__.py \
@@ -183,7 +183,7 @@ def load_urls(path: str | Path, *, warn: Callable[[str], None] | None = None) ->
 
 Raises `FileNotFoundError` / `OSError` / `UnicodeDecodeError` to caller (cli maps to exit 1).
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 `tests/test_url_file.py`:
 
@@ -234,13 +234,13 @@ def test_load_urls_empty_after_filter(tmp_path: Path):
     assert load_urls(p) == []
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `pytest tests/test_url_file.py -v`
 
 Expected: FAIL with `ImportError` or `AttributeError` (`load_urls` missing)
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 `src/web_to_epub/url_file.py`:
 
@@ -272,13 +272,13 @@ def load_urls(
     return urls
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `pytest tests/test_url_file.py -v`
 
 Expected: PASS (all 4 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/web_to_epub/url_file.py tests/test_url_file.py
@@ -309,7 +309,7 @@ def fetch_html(url: str, *, timeout: float = 30.0) -> str:
 
 Follow redirects within http(s). One attempt. Timeout applies to connect+read (httpx `timeout=timeout`).
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 `tests/test_fetch.py`:
 
@@ -370,13 +370,13 @@ def test_fetch_html_timeout():
     assert "timeout" in str(exc.value).lower() or "timed out" in str(exc.value).lower()
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `pytest tests/test_fetch.py -v`
 
 Expected: FAIL (`fetch_html` / `FetchError` not defined)
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 `src/web_to_epub/fetch.py`:
 
@@ -414,13 +414,13 @@ def fetch_html(url: str, *, timeout: float = 30.0) -> str:
         raise FetchError(str(exc)) from exc
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `pytest tests/test_fetch.py -v`
 
 Expected: PASS (all 3)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/web_to_epub/fetch.py tests/test_fetch.py
@@ -451,7 +451,7 @@ Use trafilatura with image inclusion disabled. Prefer extracted title; fallback 
 
 Note: `Chapter` lives in `epub_build.py` — create a minimal dataclass there in this task if not already present (Task 5 owns full builder; dataclass may land here first).
 
-- [ ] **Step 1: Write sample HTML fixture**
+- [x] **Step 1: Write sample HTML fixture**
 
 `tests/fixtures/sample_article.html`:
 
@@ -473,7 +473,7 @@ Note: `Chapter` lives in `epub_build.py` — create a minimal dataclass there in
 </html>
 ```
 
-- [ ] **Step 2: Write failing tests**
+- [x] **Step 2: Write failing tests**
 
 `tests/test_extract.py`:
 
@@ -514,13 +514,13 @@ def test_extract_chapter_fallback_title_is_url():
         assert isinstance(chapter.title, str)
 ```
 
-- [ ] **Step 3: Run tests to verify they fail**
+- [x] **Step 3: Run tests to verify they fail**
 
 Run: `pytest tests/test_extract.py -v`
 
 Expected: FAIL (`extract_chapter` missing)
 
-- [ ] **Step 4: Write minimal Chapter + extract implementation**
+- [x] **Step 4: Write minimal Chapter + extract implementation**
 
 `src/web_to_epub/epub_build.py` (dataclass only for now):
 
@@ -588,7 +588,7 @@ def extract_chapter(html: str, url: str) -> Chapter | None:
     return Chapter(title=title, body_html=body_html, source_url=url)
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `pytest tests/test_extract.py -v`
 
@@ -596,7 +596,7 @@ Expected: PASS for `test_extract_chapter_gets_title_and_body` and `test_extract_
 
 If `favor_recall` / API kwargs differ by trafilatura version, adjust kwargs to the installed version's supported parameters while keeping `include_images=False` and HTML output.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/web_to_epub/extract.py src/web_to_epub/epub_build.py \
@@ -628,7 +628,7 @@ def build_epub(
 
 Atomic write: write to `dest.with_suffix(dest.suffix + ".partial")` (or Adjacent temp in same dir) then `os.replace` into `dest`. Caller must not call with empty `chapters` (cli enforces).
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 `tests/test_epub_build.py`:
 
@@ -685,13 +685,13 @@ def test_build_epub_includes_source_footer(tmp_path: Path):
     assert "https://example.com/1" in blob
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `pytest tests/test_epub_build.py -v`
 
 Expected: FAIL (`NotImplementedError` or missing behavior)
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Replace `build_epub` in `src/web_to_epub/epub_build.py` with:
 
@@ -770,13 +770,13 @@ def build_epub(
     return dest_path
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `pytest tests/test_epub_build.py -v`
 
 Expected: PASS (all 3). If `get_metadata` for missing creator returns something other than empty, adjust the assertion to the ebooklib version's actual empty sentinel without adding a fake creator.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/web_to_epub/epub_build.py tests/test_epub_build.py
@@ -803,7 +803,7 @@ Pipeline inside `main`:
 5. `build_epub(...); print(path); return 0`
 6. Catch unreadable file / write errors → stderr + return 1
 
-- [ ] **Step 1: Write failing CLI tests**
+- [x] **Step 1: Write failing CLI tests**
 
 `tests/test_cli.py`:
 
@@ -881,13 +881,13 @@ def test_cli_empty_url_list(tmp_path: Path):
     assert code == 1
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `pytest tests/test_cli.py -v`
 
 Expected: FAIL (`NotImplementedError` or wrong exit codes)
 
-- [ ] **Step 3: Write CLI implementation**
+- [x] **Step 3: Write CLI implementation**
 
 `src/web_to_epub/cli.py`:
 
@@ -975,13 +975,13 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 ```
 
-- [ ] **Step 4: Run full unit suite**
+- [x] **Step 4: Run full unit suite**
 
 Run: `pytest -v`
 
 Expected: PASS (all tasks' tests green)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/web_to_epub/cli.py tests/test_cli.py
@@ -999,7 +999,7 @@ git commit -m "feat: wire CLI pipeline with fail-continue and exit codes"
 - Consumes: installed console script + `fixtures/shen-de-mofangfan-ch1-20.txt`
 - Produces: smoke log note in commit message / local `/tmp` EPUB; do **not** message QA仔
 
-- [ ] **Step 1: Run live smoke**
+- [x] **Step 1: Run live smoke**
 
 Run:
 
@@ -1016,7 +1016,7 @@ Expected:
 - Acceptable flake: many/all FAIL due to uukanshu rate-limit / anti-bot / geo-block — EXIT:1, no EPUB; capture sample stderr. This is an environment risk per spec §9.1, not an automatic product bug. Do not add login/bypass.
 - If EXIT:0 but bodies are chrome-only ads: treat as extract tuning bug — adjust `extract.py` options and add a fixture-based regression if reproducible offline.
 
-- [ ] **Step 2: Quick structural check when EPUB exists**
+- [x] **Step 2: Quick structural check when EPUB exists**
 
 Run (only if file written):
 
@@ -1036,7 +1036,7 @@ PY
 
 Expected: title/author match flags; documents ≥ 1; images == 0
 
-- [ ] **Step 3: Commit smoke note only if code changed; otherwise skip commit**
+- [x] **Step 3: Commit smoke note only if code changed; otherwise skip commit**
 
 If extract/fetch needed a fix:
 
@@ -1058,7 +1058,7 @@ If no code change: no commit required for this task.
 - Consumes: final CLI behavior
 - Produces: install + usage + UAT command + limits (no images, no paywall, sequential)
 
-- [ ] **Step 1: Write README.md**
+- [x] **Step 1: Write README.md**
 
 ```markdown
 # web-to-epub
@@ -1098,7 +1098,7 @@ Novel-aggregation sites may rate-limit or serve anti-bot HTML. Failures stay on 
 - Python 3.11+; dependencies: httpx, trafilatura, ebooklib
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add README.md
