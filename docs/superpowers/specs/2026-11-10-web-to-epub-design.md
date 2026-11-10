@@ -10,7 +10,7 @@
 
 `web-to-epub` is a small Python CLI that turns a list of public article URLs into a single EPUB3 file. Each URL becomes one chapter. Main article text is extracted (ads, banners, chrome stripped); images are omitted. The tool runs on Helic's box/cloud computer for personal offline reading.
 
-Success looks like: given a text file of 2–3 public news or blog URLs, the CLI writes an EPUB that opens in a common reader (Apple Books, Calibre, Kindle Previewer, or similar) with a working TOC of chapter titles and readable body text per chapter.
+Success looks like: QA仔 runs the CLI against `fixtures/shen-de-mofangfan-ch1-20.txt` (first 20 chapters of 《神的模仿犯》by 林思之 from [uukanshu.cc/book/26186](https://uukanshu.cc/book/26186/#tuijian)) with `--title "神的模仿犯" --author "林思之"`, and opens an EPUB with ordered chapter titles and readable Chinese body text (site chrome/ads stripped). Novel-aggregation pages may be brittle or block bots; per-URL fail-continue still applies.
 
 ---
 
@@ -151,16 +151,37 @@ Do not retry aggressively in v1 (at most one attempt per URL). Do not prompt int
 
 ## 9. Acceptance tests
 
-Manual / scripted checks for the first implementation plan:
+### 9.1 Primary UAT (Helic-locked) — QA仔
 
-1. **Happy path** — URL file with 2–3 public, freely readable news or blog articles (English or Chinese). Run with `--title` and `-o /tmp/sample.epub`. Assert: process exits `0`; file exists; unzip/`ebooklib` can open it; TOC has one entry per successful chapter; body text is non-empty and free of obvious chrome (nav menus / cookie banners should not dominate).
-2. **Comment/blank lines** — URL file with blanks and `#` comments still produces the correct chapter count.
-3. **Partial failure** — mix one deliberately bad URL (`https://example.invalid/...` or a 404) with two good ones. Assert: exit `0`; EPUB has two chapters; stderr mentions the failure.
-4. **Total failure** — only bad URLs. Assert: exit `1`; no output file created (or previous file not overwritten if `-o` pointed at an existing path — prefer not leaving a half-written epub; use temp+rename).
-5. **Text only** — open resulting EPUB (or inspect XHTML); assert no `<img>` tags and no image items in the EPUB package.
-6. **Metadata** — with `--author "Helic"`, creator metadata present; without `--author`, book still opens with title only.
+Fixture: `fixtures/shen-de-mofangfan-ch1-20.txt` — 第1–20章 URLs for 《神的模仿犯》林思之, sourced from catalog https://uukanshu.cc/book/26186/#tuijian (skip the “latest chapter” pin; use ordered 第1章…第20章 links).
 
-Automated unit tests (impl plan): parse URL file helper; map extract-empty → skip; ebook builder given N chapters yields N spine items. Live network tests optional / marked so CI can skip offline.
+Command shape:
+
+```text
+web-to-epub fixtures/shen-de-mofangfan-ch1-20.txt \
+  --title "神的模仿犯" --author "林思之" \
+  -o /tmp/shen-de-mofangfan-ch1-20.epub
+```
+
+QA仔 checks:
+
+1. Exit `0` if ≥1 chapter extracted (prefer all 20; document any skips).
+2. EPUB opens in a common reader; TOC shows chapters in 第1…第20 order for successes.
+3. Bodies are readable Chinese novel text; ads / site chrome / recommendation blocks do not dominate.
+4. No images in the package.
+5. Metadata title/author match the flags.
+
+Note: uukanshu (and similar) may rate-limit, geo-block, or serve anti-bot HTML. That is an environment risk, not a reason to add login/bypass. Failures stay on the fail-continue path; if the site wholesale blocks the box, report blocker with sample stderr instead of forcing a green UAT.
+
+### 9.2 Secondary checks (implementer)
+
+1. **Comment/blank lines** — fixture comments do not become chapters.
+2. **Partial failure** — mix one bad URL with two good ones → exit `0`, two chapters, stderr notes the failure.
+3. **Total failure** — only bad URLs → exit `1`; no EPUB written (temp+rename).
+4. **Text only** — no `<img>` / image items.
+5. **Metadata** — `--author` present vs omitted.
+
+Automated unit tests (impl plan): URL-file parser; empty extract → skip; N chapters → N spine items. Live network tests optional / skippable offline.
 
 ---
 
@@ -169,6 +190,7 @@ Automated unit tests (impl plan): parse URL file helper; map extract-empty → s
 ```text
 web-to-epub/
   docs/superpowers/specs/2026-11-10-web-to-epub-design.md  # this file
+  fixtures/shen-de-mofangfan-ch1-20.txt                   # QA仔 UAT URL list
   README.md
   pyproject.toml   # or requirements.txt + setup
   src/web_to_epub/
@@ -182,13 +204,13 @@ web-to-epub/
   tests/
 ```
 
-This commit contains **only** the design spec. No application code yet.
+This tree currently holds the design spec plus the UAT fixture. No application code yet.
 
 ---
 
 ## 11. Implementation boundary
 
-One implementation plan should cover: project scaffold, URL-file parser, fetch+extract+epub pipeline, CLI wiring, acceptance runs against 2–3 live public URLs, and a short README. No second phase is required for v1 usefulness. Defer GitHub `yoursun0/web-to-epub` remote creation until Helic asks; local git on the box is enough to start.
+One implementation plan should cover: project scaffold, URL-file parser, fetch+extract+epub pipeline, CLI wiring, QA仔 UAT against `fixtures/shen-de-mofangfan-ch1-20.txt`, and a short README. No second phase is required for v1 usefulness. Defer GitHub `yoursun0/web-to-epub` remote creation until Helic asks; local git on the box is enough to start.
 
 ---
 
@@ -198,3 +220,4 @@ One implementation plan should cover: project scaffold, URL-file parser, fetch+e
 - Approach, CLI, and pipeline agree: many URLs → one EPUB; one chapter per URL; text only; continue on failure; write only if ≥1 chapter.
 - Scope fits a single implementation plan (small CLI, three libraries, sequential loop).
 - Ambiguities resolved: default output path `./output.epub`; omit creator when `--author` absent; http(s) only; duplicates kept; images stripped/disabled; no retries beyond one attempt.
+- Primary UAT locked to 《神的模仿犯》ch1–20 fixture for QA仔 (2026-11-10 Helic).
