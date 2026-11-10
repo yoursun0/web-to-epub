@@ -22,7 +22,7 @@
 - Default output: `./output.epub`; omit creator metadata when `--author` absent
 - Exit `0` on partial/full success with file written; exit `1` on usage/no-chapters/unwritable; prefer catch+exit `1` over crash exit `2`
 - Primary UAT fixture: `fixtures/shen-de-mofangfan-ch1-20.txt` with `--title "神的模仿犯" --author "林思之"` (QA仔 later; implementer does a smoke step only — do not message QA仔)
-- Defer GitHub remote creation until Helic asks
+- GitHub remote: https://github.com/yoursun0/web-to-epub (private). Work on a feature branch; open PR to `main`. Do not force-push `main`.
 
 ---
 
